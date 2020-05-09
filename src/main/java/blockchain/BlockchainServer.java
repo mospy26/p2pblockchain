@@ -5,7 +5,7 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Date;
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class BlockchainServer {
 
@@ -29,7 +29,7 @@ public class BlockchainServer {
 
         Blockchain blockchain = new Blockchain();
 
-        HashMap<ServerInfo, Date> serverStatus = new HashMap<ServerInfo, Date>();
+        ConcurrentHashMap<ServerInfo, Date> serverStatus = new ConcurrentHashMap<ServerInfo, Date>();
         serverStatus.put(new ServerInfo(remoteHost, remotePort), new Date());
 
         // Start committer thread

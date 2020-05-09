@@ -7,16 +7,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Date;
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class BlockchainServerRunnable implements Runnable {
 
     private Socket clientSocket;
     private Blockchain blockchain;
-    private HashMap<ServerInfo, Date> serverStatus;
+    private ConcurrentHashMap<ServerInfo, Date> serverStatus;
 
     public BlockchainServerRunnable(Socket clientSocket, Blockchain blockchain,
-            HashMap<ServerInfo, Date> serverStatus) {
+    ConcurrentHashMap<ServerInfo, Date> serverStatus) {
         this.clientSocket = clientSocket;
         this.blockchain = blockchain;
         this.serverStatus = serverStatus;
@@ -79,11 +79,10 @@ public class BlockchainServerRunnable implements Runnable {
 
                         String slocalIP = (((InetSocketAddress) clientSocket.getLocalSocketAddress()).getAddress())
                                 .toString().replace("/", "");
-                        String sremoteIP = (((InetSocketAddress) clientSocket.getRemoteSocketAddress()).getAddress())
-                                .toString().replace("/", "");
+                        String sremoteIP = tokens[2];
 
                         int slocalPort = clientSocket.getLocalPort();
-                        int sremotePort = Integer.parseInt(tokens[1]);
+                        int sremotePort = Integer.parseInt(tokens[3]);
 
                         siCommandHandler(sremoteIP, slocalIP, sremotePort, slocalPort, inputLine);
 

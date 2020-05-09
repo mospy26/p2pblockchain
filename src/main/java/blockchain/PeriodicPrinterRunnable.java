@@ -2,15 +2,15 @@ package blockchain;
 
 
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class PeriodicPrinterRunnable implements Runnable{
 
 
-    private HashMap<ServerInfo, Date> serverStatus;
+    private ConcurrentHashMap<ServerInfo, Date> serverStatus;
 
-    public PeriodicPrinterRunnable(HashMap<ServerInfo, Date> serverStatus) {
+    public PeriodicPrinterRunnable(ConcurrentHashMap<ServerInfo, Date> serverStatus) {
         this.serverStatus = serverStatus;
     }
 
