@@ -1,0 +1,10 @@
+servers.num=2
+
+server0.host=localhost
+server1.host=localhost
+
+server1.port=1234
+server0.port=1888
+
+server2.host=localhost
+server2.port=2020

@@ -1,0 +1,258 @@
+output.txt
+
+
+ls
+
+> Task :run
+Server0: localhost 8888
+Server1: localhost 8831
+Server2: localhost 10000
+Server3: localhost 9999
+Server4: localhost 8384
+
+ad|localhost|dfg bsdgubsdfgjhbsdfg
+Unknown Command
+
+ad|localhost|100000000000000000000000000000
+Unknown Command
+
+ad|localhost|-100000000000000000000000000000000000000000000
+Unknown Command
+
+ad|localhost|5555
+Unknown Command
+
+rm|-3
+Unknown Command
+
+ls
+Server0: localhost 8888
+Server1: localhost 8831
+Server2: localhost 10000
+Server3: localhost 9999
+Server4: localhost 8384
+
+rm|3
+Unknown Command
+
+ls
+Server0: localhost 8888
+Server1: localhost 8831
+Server2: localhost 10000
+Server3: localhost 9999
+Server4: localhost 8384
+
+up|localhost|1
+Unknown Command
+
+up|2|localhost|5555
+Unknown Command
+
+tx|hel^C%                                                                                                                                                                          ~/Documents/units/2020s1/COMP3221/AssignmentNEW/blockchain [master ✗] gradle -Dexec.mainClass=blockchain.BlockchainClient run --args="/Users/mospy26/Documents/units/2020s1/COMP3221/AssignmentNEW/blockchain/src/main/resources/acceptancetest.txt" --console=plain
+
+> Configure project :
+blockchain.BlockchainClient
+
+> Task :compileJava
+> Task :processResources UP-TO-DATE
+> Task :classes
+ls
+
+> Task :run
+Server0: localhost 8888
+Server1: localhost 8831
+Server2: localhost 10000
+Server3: localhost 9999
+Server4: localhost 8384
+
+rm|-1
+Failed
+
+rm|0
+Succeeded
+
+rm|1
+Succeeded
+
+ls
+Server2: localhost 10000
+Server3: localhost 9999
+Server4: localhost 8384
+
+ad|localhost|10000000000000000000000000000
+Port should be integersFailed
+
+
+Usage: ad|<hostname>|<port>
+ad|localhost|-10000000000000000000000000
+Port should be integers
+Failed
+Usage: ad|<hostname>|<port>
+
+ad|localhost|2434
+Succeeded
+
+rm|-1
+Failed
+
+rm|1000
+Failed
+
+rm|2
+Succeeded
+
+rm|2
+Succeeded
+
+ls
+Server3: localhost 9999
+Server4: localhost 8384
+Server5: localhost 2434
+
+up|0|hdfsbsdfhba|usfbiusdbf
+Failed
+Index and ports should be integers
+
+Usage: up|<index>|<hostname>|<port>
+up|0|192.168.0.1|8322
+Succeeded
+
+ls
+Server0: 192.168.0.1 8322
+Server3: localhost 9999
+Server4: localhost 8384
+Server5: localhost 2434
+
+tx|test0001|lol
+Server0: 192.168.0.1 8322
+Server is not available
+
+Server3: localhost 9999
+Server is not available
+
+Server4: localhost 8384
+Server is not available
+
+Server5: localhost 2434
+Server is not available
+
+ad|localhost|8888
+Succeeded
+
+ls
+Server0: 192.168.0.1 8322
+Server3: localhost 9999
+Server4: localhost 8384
+Server5: localhost 2434
+Server6: localhost 8888
+
+tx|test0001|lol
+Server0: 192.168.0.1 8322
+Server is not available
+
+Server3: localhost 9999
+Server is not available
+
+Server4: localhost 8384
+Server is not available
+
+Server5: localhost 2434
+Server is not available
+
+Server6: localhost 8888
+Accepted
+
+pb
+Server0: 192.168.0.1 8322
+Server is not available
+
+Server3: localhost 9999
+Server is not available
+
+Server4: localhost 8384
+Server is not available
+
+Server5: localhost 2434
+Server is not available
+
+Server6: localhost 8888
+Pool:
+---------------------------------------------------------------------------------
+|test0001|                                                                   lol|
+---------------------------------------------------------------------------------
+
+pb|1
+
+
+##### pb gets stuck
+
+---------------------------**********-----------------------------------------------------------------------------------------------
+
+pb
+
+> Task :run
+Server0: localhost 8888
+Pool:
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Block:
+---------------------------------------------------------------------------------
+|CurrentHash:|                      X7wti+r+Xu2eCyeGp3F2gcG+nArahlkpO0UKIFxS53o=|
+---------------------------------------------------------------------------------
+|test0001|                                                                   lol|
+---------------------------------------------------------------------------------
+|PreviousHash:|                     AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=|
+---------------------------------------------------------------------------------
+
+Server1: localhost 8831
+Pool:
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+
+Server2: localhost 10000
+Server is not available
+
+Server3: localhost 9999
+Server is not available
+
+Server4: localhost 8384
+Server is not available
+
+ls
+Server0: localhost 8888
+Server1: localhost 8831
+Server2: localhost 10000
+Server3: localhost 9999
+Server4: localhost 8384
+
+pb|1|2|3
+Server1: localhost 8831
+Pool:
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+
+Server2: localhost 10000
+Server is not available
+
+Server3: localhost 9999
+Server is not available
+
+pb|sdfsdf
+Unknown Command
+
+pb|ewrhuiqge
+Unknown Command
+
+qwuehr
+Unknown Command
+
+sd
+---------------------------**********-----------------------------------------------------------------------------------------------
+
+---------------------------**********-----------------------------------------------------------------------------------------------
+
+---------------------------**********-----------------------------------------------------------------------------------------------
+
+---------------------------**********-----------------------------------------------------------------------------------------------
+
+---------------------------**********-----------------------------------------------------------------------------------------------

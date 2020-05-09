@@ -1,0 +1,21 @@
+servers.invalid = blah
+
+helloworld
+
+COMP3221 is great!
+
+Alejandro is the best tutor!
+
+server1.port=9999
+
+servers.numberrr= 11
+
+
+server1.host=invalidhostname%%%%%^^^&&
+
+server0.hostnameee= what?
+
+server0.port=1234
+server0.host=localhost
+
+bye bye !
