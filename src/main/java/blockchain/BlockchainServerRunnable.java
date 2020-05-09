@@ -1,5 +1,6 @@
 package blockchain;
 
+
 import java.io.*;
 import java.net.Socket;
 import java.net.InetSocketAddress;
@@ -77,14 +78,18 @@ public class BlockchainServerRunnable implements Runnable {
                         if (!siCommandValid(inputLine, tokens))
                             break;
 
-                        String slocalIP = (((InetSocketAddress) clientSocket.getLocalSocketAddress()).getAddress())
+                        String myIP = (((InetSocketAddress) clientSocket.getLocalSocketAddress()).getAddress())
                                 .toString().replace("/", "");
                         String sremoteIP = tokens[2];
 
-                        int slocalPort = clientSocket.getLocalPort();
+                        int myPort = clientSocket.getLocalPort();
                         int sremotePort = Integer.parseInt(tokens[3]);
 
-                        siCommandHandler(sremoteIP, slocalIP, sremotePort, slocalPort, inputLine);
+                        String originatorIP = (((InetSocketAddress) clientSocket.getRemoteSocketAddress()).getAddress())
+                                .toString().replace("/", "");
+                        int originatorPort = Integer.parseInt(tokens[1]);
+
+                        siCommandHandler(sremoteIP, myIP, originatorIP, sremotePort, myPort, originatorPort, inputLine);
 
                         break;
 
@@ -127,10 +132,11 @@ public class BlockchainServerRunnable implements Runnable {
         }
     }
 
-    private void siCommandHandler(String remoteIP, String localIP, int remotePort, int localPort, String line) {
+    private void siCommandHandler(String remoteIP, String localIP, String originatorIP, int remotePort, int localPort, int originatorPort, String line) {
 
         ServerInfo remote = new ServerInfo(remoteIP, remotePort);
         ServerInfo local = new ServerInfo(localIP, localPort);
+        ServerInfo originator = new ServerInfo(originatorIP, originatorPort);
 
         if (!serverStatus.keySet().contains(remote)) {
             serverStatus.put(remote, new Date());
@@ -138,7 +144,7 @@ public class BlockchainServerRunnable implements Runnable {
             // relay
             ArrayList<Thread> threadArrayList = new ArrayList<>();
             for (ServerInfo s : serverStatus.keySet()) {
-                if (s.equals(remote) || s.equals(local)) {
+                if (s.equals(remote) || s.equals(local) || s.equals(originator)) {
                     continue;
                 }
                 Thread thread = new Thread(new HeartBeatClientRunnable(s, "si|" + localPort + "|" + remoteIP + "|" + remotePort));
