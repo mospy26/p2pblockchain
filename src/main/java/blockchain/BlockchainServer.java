@@ -47,6 +47,11 @@ public class BlockchainServer {
         Thread phbt = new Thread(phbr);
         phbt.start();
 
+        // Latest Block hash sender thread
+        PeriodicLatestBlockHashSender plbhr = new PeriodicLatestBlockHashSender(serverStatus, blockchain, localPort);
+        Thread plbht = new Thread(plbhr);
+        plbht.start();
+
         ServerSocket serverSocket = null;
         try {
             serverSocket = new ServerSocket(localPort);

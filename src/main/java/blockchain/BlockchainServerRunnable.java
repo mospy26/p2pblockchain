@@ -5,7 +5,6 @@ import java.io.*;
 import java.net.Socket;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
@@ -15,6 +14,8 @@ public class BlockchainServerRunnable implements Runnable {
     private Socket clientSocket;
     private Blockchain blockchain;
     private ConcurrentHashMap<ServerInfo, Date> serverStatus;
+    private final String PORT_REGEX = "([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])";
+    private final String HOST_REGEX = "(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\\-]*[a-zA-Z0-9])\\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\\-]*[A-Za-z0-9])";
 
     public BlockchainServerRunnable(Socket clientSocket, Blockchain blockchain,
     ConcurrentHashMap<ServerInfo, Date> serverStatus) {
@@ -93,6 +94,19 @@ public class BlockchainServerRunnable implements Runnable {
 
                         break;
 
+                    case "lb":
+                        if (!lbCommandValid(inputLine, tokens)) break;
+
+                        System.out.println(tokens[3].length());
+
+                        int senderPort = Integer.parseInt(tokens[1]);
+                        int blockchainSize = Integer.parseInt(tokens[2]);
+                        String hash = tokens[3];
+                        
+                        if (blockchainSize > blockchain.getLength() || (blockchain.getLength() != 0 && Base64.getEncoder().encodeToString(blockchain.getHead().calculateHash()).compareTo(hash) > 0)) {
+                            catchup((((InetSocketAddress) clientSocket.getRemoteSocketAddress()).getAddress()).toString().replace("/", ""), senderPort);
+                        }
+
                     default:
                         outWriter.print("Error\n\n");
                         outWriter.flush();
@@ -100,6 +114,11 @@ public class BlockchainServerRunnable implements Runnable {
             }
         } catch (IOException e) {
         }
+    }
+
+    private void catchup(String remoteAddr, int remotePort) {
+        System.out.println("Catch up not yet implemented! Bye!");
+        return;
     }
 
     private void heartBeatReceivedHandler(String remoteIP, String localIP, int remotePort, int localPort, String seq) {
@@ -164,14 +183,16 @@ public class BlockchainServerRunnable implements Runnable {
 
     private boolean hbCommandValid(String line) {
         return line.matches(
-                "^hb\\|([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])\\|[0-9]+$")
+                "^hb\\|" + PORT_REGEX + "\\|[0-9]+$")
                 && Integer.parseInt(line.split("\\|")[1]) >= 1024;
     }
 
     private boolean siCommandValid(String line, String[] tokens) {
-        String portRegex = "([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])";
-        String hostRegex = "(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\\-]*[a-zA-Z0-9])\\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\\-]*[A-Za-z0-9])";
-        return line.matches("^si\\|" + portRegex + "\\|" + hostRegex + "\\|" + portRegex + "$")
+        return line.matches("^si\\|" + PORT_REGEX + "\\|" + HOST_REGEX + "\\|" + PORT_REGEX + "$")
                 && Integer.parseInt(tokens[1]) > 1023 && Integer.parseInt(tokens[3]) > 1023;
+    }
+
+    private boolean lbCommandValid(String line, String[] tokens) {
+        return line.matches("lb\\|" + PORT_REGEX + "\\|[0-9]+\\|.+") && Integer.parseInt(tokens[1]) > 1023;
     }
 }
