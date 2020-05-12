@@ -97,8 +97,6 @@ public class BlockchainServerRunnable implements Runnable {
                     case "lb":
                         if (!lbCommandValid(inputLine, tokens)) break;
 
-                        System.out.println(tokens[3].length());
-
                         int senderPort = Integer.parseInt(tokens[1]);
                         int blockchainSize = Integer.parseInt(tokens[2]);
                         String hash = tokens[3];
@@ -106,6 +104,7 @@ public class BlockchainServerRunnable implements Runnable {
                         if (blockchainSize > blockchain.getLength() || (blockchain.getLength() != 0 && Base64.getEncoder().encodeToString(blockchain.getHead().calculateHash()).compareTo(hash) > 0)) {
                             catchup((((InetSocketAddress) clientSocket.getRemoteSocketAddress()).getAddress()).toString().replace("/", ""), senderPort);
                         }
+                        else clientSocket.close();
 
                     default:
                         outWriter.print("Error\n\n");
@@ -117,7 +116,9 @@ public class BlockchainServerRunnable implements Runnable {
     }
 
     private void catchup(String remoteAddr, int remotePort) {
-        System.out.println("Catch up not yet implemented! Bye!");
+        // Establish new connection
+
+        // Do the catchup
         return;
     }
 
