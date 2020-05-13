@@ -1,6 +1,5 @@
 package blockchain;
 
-
 import java.io.*;
 import java.net.Socket;
 import java.net.InetSocketAddress;
@@ -18,7 +17,7 @@ public class BlockchainServerRunnable implements Runnable {
     private final String HOST_REGEX = "(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\\-]*[a-zA-Z0-9])\\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\\-]*[A-Za-z0-9])";
 
     public BlockchainServerRunnable(Socket clientSocket, Blockchain blockchain,
-    ConcurrentHashMap<ServerInfo, Date> serverStatus) {
+            ConcurrentHashMap<ServerInfo, Date> serverStatus) {
         this.clientSocket = clientSocket;
         this.blockchain = blockchain;
         this.serverStatus = serverStatus;
@@ -95,16 +94,36 @@ public class BlockchainServerRunnable implements Runnable {
                         break;
 
                     case "lb":
-                        if (!lbCommandValid(inputLine, tokens)) break;
+                        if (!lbCommandValid(inputLine, tokens))
+                            break;
 
                         int senderPort = Integer.parseInt(tokens[1]);
                         int blockchainSize = Integer.parseInt(tokens[2]);
-                        String hash = tokens[3];
+                        byte[] hash = Base64.getDecoder().decode(tokens[3]);
+
+                        byte[] myHash = blockchain.getHead() == null ? null : blockchain.getHead().calculateHash();
+                        boolean isGreaterHash = myHash == null ? true : !compareHash(myHash, hash);
+
+                        if (blockchainSize > blockchain.getLength() || isGreaterHash) {
+                            catchup((((InetSocketAddress) clientSocket.getRemoteSocketAddress()).getAddress())
+                                    .toString().replace("/", ""), senderPort);
+                        } else
+                            clientSocket.close();
+
+                    case "cu":
+                        if (!cuCommandValid(inputLine))
+                            break;
+
+                        Block block;
+                        if (tokens.length == 1) block = fetchBlock(null);
+                        else block = fetchBlock(tokens[1]);
+
+                        // Invalid hash or block
+                        if (block == null) break;
+
+                        sendBlock(block);
                         
-                        if (blockchainSize > blockchain.getLength() || (blockchain.getLength() != 0 && Base64.getEncoder().encodeToString(blockchain.getHead().calculateHash()).compareTo(hash) > 0)) {
-                            catchup((((InetSocketAddress) clientSocket.getRemoteSocketAddress()).getAddress()).toString().replace("/", ""), senderPort);
-                        }
-                        else clientSocket.close();
+                        break;
 
                     default:
                         outWriter.print("Error\n\n");
@@ -120,6 +139,32 @@ public class BlockchainServerRunnable implements Runnable {
 
         // Do the catchup
         return;
+    }
+
+    private void sendBlock(Block block) {
+        ObjectOutputStream sender;
+        try {
+            sender = new ObjectOutputStream(clientSocket.getOutputStream());
+            sender.writeObject(block);
+            sender.flush();
+        } catch (IOException e) {
+            return;
+        }
+    }
+
+    private Block fetchBlock(String hash) {
+        Block block = blockchain.getHead();
+
+        // no hash
+        if (hash == null) return block;
+
+        while (block != null) {
+            if (Base64.getEncoder().encodeToString(block.calculateHash()).equals(hash)) {
+                return block;
+            }
+            block = block.getPreviousBlock();
+        }
+        return null;
     }
 
     private void heartBeatReceivedHandler(String remoteIP, String localIP, int remotePort, int localPort, String seq) {
@@ -195,5 +240,20 @@ public class BlockchainServerRunnable implements Runnable {
 
     private boolean lbCommandValid(String line, String[] tokens) {
         return line.matches("lb\\|" + PORT_REGEX + "\\|[0-9]+\\|.+") && Integer.parseInt(tokens[1]) > 1023;
+    }
+
+    private boolean cuCommandValid(String line) {
+        return line.matches("cu") || line.matches("cu\\|.+");
+    }
+
+    // returns true if my hash is lesser than the other one
+    private boolean compareHash(byte[] hash1, byte[] hash2) {
+        if (hash1.length != hash2.length) return false;
+        for (int i = 0; i < hash1.length; i++) {
+            if (hash1[i] < hash2[i]) return true;
+            else if (hash1[i] == hash2[i]) continue;
+            else return false;
+        }
+        return false;
     }
 }
