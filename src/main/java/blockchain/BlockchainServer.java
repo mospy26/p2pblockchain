@@ -1,9 +1,11 @@
 package blockchain;
 
-
 import java.io.*;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Arrays;
+import java.util.Base64;
 import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -19,6 +21,7 @@ public class BlockchainServer {
         int remotePort = 0;
         String remoteHost = null;
 
+
         try {
             localPort = Integer.parseInt(args[0]);
             remoteHost = args[1];
@@ -28,6 +31,7 @@ public class BlockchainServer {
         }
 
         Blockchain blockchain = new Blockchain();
+        initialCatchup(blockchain, remoteHost, remotePort);
 
         ConcurrentHashMap<ServerInfo, Date> serverStatus = new ConcurrentHashMap<ServerInfo, Date>();
         serverStatus.put(new ServerInfo(remoteHost, remotePort), new Date());
@@ -73,6 +77,63 @@ public class BlockchainServer {
             } catch (IOException e) {
             } catch (InterruptedException e) {
             }
+        }
+    }
+
+    private static void initialCatchup(Blockchain blockchain, String remoteIP, int remotePort) {
+
+        try {
+
+            Socket socket = new Socket();
+            socket.connect(new InetSocketAddress(remoteIP, remotePort), 2000);
+            
+            InputStream clientInputStream = socket.getInputStream();
+            OutputStream clientOutputStream = socket.getOutputStream();
+
+            ObjectInputStream inputReader = new ObjectInputStream(clientInputStream);
+            PrintWriter outWriter = new PrintWriter(clientOutputStream, true);
+
+            outWriter.println("cu");
+            outWriter.flush();
+
+            Block block = (Block) inputReader.readObject();
+
+            if (block == null) {
+                blockchain.setHead(null);
+                socket.close();
+                return;
+            }
+            
+            blockchain.setHead(block);
+
+            socket.close();
+
+            while (!Arrays.equals(block.getPreviousHash(), new byte[32])) {
+                Socket nextSocket = new Socket();
+                nextSocket.connect(new InetSocketAddress(remoteIP, remotePort), 2000);
+
+                InputStream is = socket.getInputStream();
+                OutputStream os = socket.getOutputStream();
+
+                ObjectInputStream in = new ObjectInputStream(is);
+                PrintWriter out = new PrintWriter(os, true);
+                
+                out.write("cu|" + Base64.getEncoder().encodeToString(((Block) block).getPreviousHash()));
+                out.flush();
+
+                block = (Block) in.readObject();
+                
+                blockchain.addBlock(block);
+
+                nextSocket.close();
+            }
+
+        } catch(IOException e) {
+            e.printStackTrace();
+            return;
+        } catch (ClassNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
         }
     }
 }

@@ -7,7 +7,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class PeriodicPrinterRunnable implements Runnable{
 
-
     private ConcurrentHashMap<ServerInfo, Date> serverStatus;
 
     public PeriodicPrinterRunnable(ConcurrentHashMap<ServerInfo, Date> serverStatus) {

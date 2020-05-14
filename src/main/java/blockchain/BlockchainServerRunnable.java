@@ -35,6 +35,12 @@ public class BlockchainServerRunnable implements Runnable {
 
         BufferedReader inputReader = new BufferedReader(new InputStreamReader(clientInputStream));
         PrintWriter outWriter = new PrintWriter(clientOutputStream, true);
+        ObjectOutputStream objectWriter = null;
+        try {
+            objectWriter = new ObjectOutputStream(clientOutputStream);
+        } catch (IOException e1) {
+            return;
+        }
 
         try {
             while (true) {
@@ -121,7 +127,7 @@ public class BlockchainServerRunnable implements Runnable {
                         // Invalid hash or block
                         if (block == null) break;
 
-                        sendBlock(block);
+                        sendBlock(block, objectWriter);
                         
                         break;
 
@@ -141,10 +147,8 @@ public class BlockchainServerRunnable implements Runnable {
         return;
     }
 
-    private void sendBlock(Block block) {
-        ObjectOutputStream sender;
+    private void sendBlock(Block block, ObjectOutputStream sender) {
         try {
-            sender = new ObjectOutputStream(clientSocket.getOutputStream());
             sender.writeObject(block);
             sender.flush();
         } catch (IOException e) {

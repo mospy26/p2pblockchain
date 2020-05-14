@@ -72,7 +72,7 @@ public class Blockchain {
         newBlock.setTransactions(pool);
         byte[] hash = newBlock.calculateHashWithNonce(nonce);
         String hashString = Base64.getEncoder().encodeToString(hash);
-        if(hashString.startsWith("A")) {
+        if(!hashString.startsWith("A")) {
             newBlock.setPreviousBlock(head);
             head = newBlock;
             pool = new ArrayList<>();
@@ -101,5 +101,23 @@ public class Blockchain {
                 + poolString
                 + cutOffRule
                 + blockString;
+    }
+
+    // add block to the end of blockchain from head onwards
+    public synchronized void addBlock(Block block) {
+        if (head == null) {
+            head = block;
+            return;
+        }
+
+        Block temp = head;
+
+        while (temp.getPreviousBlock() != null) {
+            temp = temp.getPreviousBlock();
+        }
+        
+        temp.setPreviousBlock(block);
+        temp.setPreviousHash(block.calculateHash());
+        length++;
     }
 }
