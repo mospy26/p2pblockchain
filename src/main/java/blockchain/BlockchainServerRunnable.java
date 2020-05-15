@@ -1,5 +1,6 @@
 package blockchain;
 
+
 import java.io.*;
 import java.net.Socket;
 import java.net.InetSocketAddress;
@@ -100,6 +101,7 @@ public class BlockchainServerRunnable implements Runnable {
                         break;
 
                     case "lb":
+                        System.out.println(inputLine);
                         if (!lbCommandValid(inputLine, tokens))
                             break;
 
@@ -110,9 +112,13 @@ public class BlockchainServerRunnable implements Runnable {
                         byte[] myHash = blockchain.getHead() == null ? null : blockchain.getHead().calculateHash();
                         boolean isGreaterHash = myHash == null ? true : !compareHash(myHash, hash);
 
+                        String remote = (((InetSocketAddress) clientSocket.getRemoteSocketAddress()).getAddress())
+                                .toString().replace("/", "");
+
                         if (blockchainSize > blockchain.getLength() || isGreaterHash) {
-                            catchup((((InetSocketAddress) clientSocket.getRemoteSocketAddress()).getAddress())
-                                    .toString().replace("/", ""), senderPort);
+                            // catchup((((InetSocketAddress) clientSocket.getRemoteSocketAddress()).getAddress())
+                            //         .toString().replace("/", ""), senderPort);
+                            BlockchainServer.initialCatchup(blockchain, remote, senderPort);
                         } else
                             clientSocket.close();
 

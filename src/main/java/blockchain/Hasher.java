@@ -36,9 +36,7 @@ public class Hasher {
             byte[] hash = digest.digest(bytes);
             hashString = Base64.getEncoder().encodeToString(hash);
         } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
         } catch (IOException e) {
-            e.printStackTrace();
         }
         return hashString;
     }

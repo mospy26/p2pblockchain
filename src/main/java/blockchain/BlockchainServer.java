@@ -1,5 +1,6 @@
 package blockchain;
 
+
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -80,7 +81,7 @@ public class BlockchainServer {
         }
     }
 
-    private static void initialCatchup(Blockchain blockchain, String remoteIP, int remotePort) {
+    public static void initialCatchup(Blockchain blockchain, String remoteIP, int remotePort) {
 
         try {
 
@@ -129,11 +130,9 @@ public class BlockchainServer {
             }
 
         } catch(IOException e) {
-            e.printStackTrace();
             return;
         } catch (ClassNotFoundException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            return;
         }
     }
 }
