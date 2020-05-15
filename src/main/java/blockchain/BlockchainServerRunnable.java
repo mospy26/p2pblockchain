@@ -125,7 +125,10 @@ public class BlockchainServerRunnable implements Runnable {
                         else block = fetchBlock(tokens[1]);
 
                         // Invalid hash or block
-                        if (block == null) break;
+                        if (block == null) {
+                            objectWriter.writeObject(null);
+                            break;
+                        }
 
                         sendBlock(block, objectWriter);
                         

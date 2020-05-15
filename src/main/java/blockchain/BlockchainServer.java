@@ -118,7 +118,7 @@ public class BlockchainServer {
                 ObjectInputStream in = new ObjectInputStream(is);
                 PrintWriter out = new PrintWriter(os, true);
                 
-                out.write("cu|" + Base64.getEncoder().encodeToString(((Block) block).getPreviousHash()));
+                out.write("cu|" + Base64.getEncoder().encodeToString(block.getPreviousHash()));
                 out.flush();
 
                 block = (Block) in.readObject();
