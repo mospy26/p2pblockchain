@@ -107,6 +107,7 @@ public class Blockchain {
     public synchronized void addBlock(Block block) {
         if (head == null) {
             head = block;
+            length++;
             return;
         }
 

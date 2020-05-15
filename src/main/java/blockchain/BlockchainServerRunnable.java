@@ -5,6 +5,7 @@ import java.io.*;
 import java.net.Socket;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
@@ -101,7 +102,6 @@ public class BlockchainServerRunnable implements Runnable {
                         break;
 
                     case "lb":
-                        System.out.println(inputLine);
                         if (!lbCommandValid(inputLine, tokens))
                             break;
 
@@ -115,12 +115,14 @@ public class BlockchainServerRunnable implements Runnable {
                         String remote = (((InetSocketAddress) clientSocket.getRemoteSocketAddress()).getAddress())
                                 .toString().replace("/", "");
 
-                        if (blockchainSize > blockchain.getLength() || isGreaterHash) {
-                            // catchup((((InetSocketAddress) clientSocket.getRemoteSocketAddress()).getAddress())
-                            //         .toString().replace("/", ""), senderPort);
-                            BlockchainServer.initialCatchup(blockchain, remote, senderPort);
-                        } else
-                            clientSocket.close();
+                        if (blockchainSize > blockchain.getLength()) {
+                            catchup(remote, senderPort);
+                        }
+                        else if (blockchainSize == blockchain.getLength() && !isGreaterHash) {
+                            catchup(remote, senderPort);
+                        }
+
+                        break;
 
                     case "cu":
                         if (!cuCommandValid(inputLine))
@@ -153,6 +155,8 @@ public class BlockchainServerRunnable implements Runnable {
         // Establish new connection
 
         // Do the catchup
+
+        initialCatchup(blockchain, remoteAddr, remotePort);
         return;
     }
 
@@ -268,5 +272,60 @@ public class BlockchainServerRunnable implements Runnable {
             else return false;
         }
         return false;
+    }
+
+    public void initialCatchup(Blockchain blockchain, String remoteIP, int remotePort) {
+
+        try {
+            blockchain.setHead(null);
+            blockchain.setLength(0);
+
+            Socket socket = new Socket();
+            socket.connect(new InetSocketAddress(remoteIP, remotePort), 2000);
+            
+            InputStream clientInputStream = socket.getInputStream();
+            OutputStream clientOutputStream = socket.getOutputStream();
+
+            ObjectInputStream inputReader = new ObjectInputStream(clientInputStream);
+            PrintWriter outWriter = new PrintWriter(clientOutputStream, true);
+
+            outWriter.println("cu");
+            outWriter.flush();
+
+            Block block = (Block) inputReader.readObject();
+
+            if (block == null) {
+                socket.close();
+                return;
+            }
+            
+            blockchain.addBlock(block);
+
+            socket.close();
+
+            while (!Arrays.equals(block.getPreviousHash(), new byte[32])) {
+                Socket nextSocket = new Socket();
+                nextSocket.connect(new InetSocketAddress(remoteIP, remotePort), 2000);
+
+                InputStream is = nextSocket.getInputStream();
+                OutputStream os = nextSocket.getOutputStream();
+
+                ObjectInputStream in = new ObjectInputStream(is);
+                PrintWriter out = new PrintWriter(os, true);
+                
+                out.println("cu|" + Base64.getEncoder().encodeToString(block.getPreviousHash()));
+                out.flush();
+
+                block = (Block) in.readObject();
+
+                blockchain.addBlock(block);
+
+                nextSocket.close();
+            }
+            return;
+
+        } catch (Exception e) {
+            return;
+        }
     }
 }

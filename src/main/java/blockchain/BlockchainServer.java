@@ -31,8 +31,7 @@ public class BlockchainServer {
             return;
         }
 
-        Blockchain blockchain = new Blockchain();
-        initialCatchup(blockchain, remoteHost, remotePort);
+        Blockchain blockchain = initialCatchup(remoteHost, remotePort);
 
         ConcurrentHashMap<ServerInfo, Date> serverStatus = new ConcurrentHashMap<ServerInfo, Date>();
         serverStatus.put(new ServerInfo(remoteHost, remotePort), new Date());
@@ -81,7 +80,9 @@ public class BlockchainServer {
         }
     }
 
-    public static void initialCatchup(Blockchain blockchain, String remoteIP, int remotePort) {
+    public static Blockchain initialCatchup(String remoteIP, int remotePort) {
+
+        Blockchain blockchain = new Blockchain();
 
         try {
 
@@ -102,10 +103,11 @@ public class BlockchainServer {
             if (block == null) {
                 blockchain.setHead(null);
                 socket.close();
-                return;
+                return blockchain;
             }
             
-            blockchain.setHead(block);
+
+            blockchain.addBlock(block);
 
             socket.close();
 
@@ -113,26 +115,24 @@ public class BlockchainServer {
                 Socket nextSocket = new Socket();
                 nextSocket.connect(new InetSocketAddress(remoteIP, remotePort), 2000);
 
-                InputStream is = socket.getInputStream();
-                OutputStream os = socket.getOutputStream();
+                InputStream is = nextSocket.getInputStream();
+                OutputStream os = nextSocket.getOutputStream();
 
                 ObjectInputStream in = new ObjectInputStream(is);
                 PrintWriter out = new PrintWriter(os, true);
                 
-                out.write("cu|" + Base64.getEncoder().encodeToString(block.getPreviousHash()));
+                out.println("cu|" + Base64.getEncoder().encodeToString(block.getPreviousHash()));
                 out.flush();
 
                 block = (Block) in.readObject();
-                
                 blockchain.addBlock(block);
 
                 nextSocket.close();
             }
+            return blockchain;
 
-        } catch(IOException e) {
-            return;
-        } catch (ClassNotFoundException e) {
-            return;
+        } catch (Exception e) {
+            return new Blockchain();
         }
     }
 }
