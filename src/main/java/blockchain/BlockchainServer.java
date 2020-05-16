@@ -92,13 +92,14 @@ public class BlockchainServer {
             InputStream clientInputStream = socket.getInputStream();
             OutputStream clientOutputStream = socket.getOutputStream();
 
-            ObjectInputStream inputReader = new ObjectInputStream(clientInputStream);
+            // ObjectInputStream inputReader = new ObjectInputStream(clientInputStream);
             PrintWriter outWriter = new PrintWriter(clientOutputStream, true);
 
             outWriter.println("cu");
             outWriter.flush();
 
-            Block block = (Block) inputReader.readObject();
+            // Block block = (Block) inputReader.readObject();
+            Block block = getBlock(clientInputStream);
 
             if (block == null) {
                 blockchain.setHead(null);
@@ -106,7 +107,6 @@ public class BlockchainServer {
                 return blockchain;
             }
             
-
             blockchain.addBlock(block);
 
             socket.close();
@@ -118,13 +118,14 @@ public class BlockchainServer {
                 InputStream is = nextSocket.getInputStream();
                 OutputStream os = nextSocket.getOutputStream();
 
-                ObjectInputStream in = new ObjectInputStream(is);
+                // ObjectInputStream in = new ObjectInputStream(is);
                 PrintWriter out = new PrintWriter(os, true);
                 
                 out.println("cu|" + Base64.getEncoder().encodeToString(block.getPreviousHash()));
                 out.flush();
 
-                block = (Block) in.readObject();
+                // block = (Block) in.readObject();
+                block = getBlock(is);
                 blockchain.addBlock(block);
 
                 nextSocket.close();
@@ -134,5 +135,13 @@ public class BlockchainServer {
         } catch (Exception e) {
             return new Blockchain();
         }
+    }
+
+    private static Block getBlock(InputStream clientInputStream) throws IOException, ClassNotFoundException {
+        ObjectInputStream inputReader = new ObjectInputStream(clientInputStream);
+        Block block = (Block) inputReader.readObject();
+
+        inputReader.close();
+        return block;
     }
 }

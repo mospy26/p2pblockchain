@@ -15,6 +15,7 @@ public class BlockchainServerRunnable implements Runnable {
     private Socket clientSocket;
     private Blockchain blockchain;
     private ConcurrentHashMap<ServerInfo, Date> serverStatus;
+    private ObjectOutputStream objectWriter;
     private final String PORT_REGEX = "([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])";
     private final String HOST_REGEX = "(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\\-]*[a-zA-Z0-9])\\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\\-]*[A-Za-z0-9])";
 
@@ -36,13 +37,7 @@ public class BlockchainServerRunnable implements Runnable {
     public void serverHandler(InputStream clientInputStream, OutputStream clientOutputStream) {
 
         BufferedReader inputReader = new BufferedReader(new InputStreamReader(clientInputStream));
-        PrintWriter outWriter = new PrintWriter(clientOutputStream, true);
-        ObjectOutputStream objectWriter = null;
-        try {
-            objectWriter = new ObjectOutputStream(clientOutputStream);
-        } catch (IOException e1) {
-            return;
-        }
+        PrintWriter outWriter = new PrintWriter(clientOutputStream);
 
         try {
             while (true) {
@@ -125,6 +120,11 @@ public class BlockchainServerRunnable implements Runnable {
                         break;
 
                     case "cu":
+                        try {
+                            objectWriter = new ObjectOutputStream(clientOutputStream);
+                        } catch (IOException e1) {
+                            return;
+                        }
                         if (!cuCommandValid(inputLine))
                             break;
 
@@ -139,7 +139,6 @@ public class BlockchainServerRunnable implements Runnable {
                         }
 
                         sendBlock(block, objectWriter);
-                        
                         break;
 
                     default:
@@ -286,12 +285,12 @@ public class BlockchainServerRunnable implements Runnable {
             InputStream clientInputStream = socket.getInputStream();
             OutputStream clientOutputStream = socket.getOutputStream();
 
-            ObjectInputStream inputReader = new ObjectInputStream(clientInputStream);
             PrintWriter outWriter = new PrintWriter(clientOutputStream, true);
 
             outWriter.println("cu");
             outWriter.flush();
 
+            ObjectInputStream inputReader = new ObjectInputStream(clientInputStream);
             Block block = (Block) inputReader.readObject();
 
             if (block == null) {
@@ -305,17 +304,17 @@ public class BlockchainServerRunnable implements Runnable {
 
             while (!Arrays.equals(block.getPreviousHash(), new byte[32])) {
                 Socket nextSocket = new Socket();
-                nextSocket.connect(new InetSocketAddress(remoteIP, remotePort), 2000);
+                nextSocket.connect(new InetSocketAddress(remoteIP, remotePort), 500);
 
                 InputStream is = nextSocket.getInputStream();
                 OutputStream os = nextSocket.getOutputStream();
 
-                ObjectInputStream in = new ObjectInputStream(is);
                 PrintWriter out = new PrintWriter(os, true);
                 
                 out.println("cu|" + Base64.getEncoder().encodeToString(block.getPreviousHash()));
                 out.flush();
 
+                ObjectInputStream in = new ObjectInputStream(is);
                 block = (Block) in.readObject();
 
                 blockchain.addBlock(block);

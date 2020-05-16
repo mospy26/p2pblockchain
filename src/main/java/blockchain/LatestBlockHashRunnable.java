@@ -21,7 +21,7 @@ public class LatestBlockHashRunnable implements Runnable{
         try {
             // create socket with a timeout of 2 seconds
             Socket toServer = new Socket();
-            toServer.connect(new InetSocketAddress(serverInfo.getHost(), serverInfo.getPort()), 2000);
+            toServer.connect(new InetSocketAddress(serverInfo.getHost(), serverInfo.getPort()), 500);
             PrintWriter printWriter = new PrintWriter(toServer.getOutputStream(), true);
 
             // send the message forward
