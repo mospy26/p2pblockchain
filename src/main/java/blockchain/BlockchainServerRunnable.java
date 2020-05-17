@@ -135,10 +135,12 @@ public class BlockchainServerRunnable implements Runnable {
                         // Invalid hash or block
                         if (block == null) {
                             objectWriter.writeObject(null);
+                            objectWriter.flush();
                             break;
                         }
 
                         sendBlock(block, objectWriter);
+                        objectWriter.close();
                         break;
 
                     default:
@@ -170,9 +172,6 @@ public class BlockchainServerRunnable implements Runnable {
 
     private Block fetchBlock(String hash) {
         Block block = blockchain.getHead();
-
-        // no hash
-        if (hash == null) return block;
 
         while (block != null) {
             if (Base64.getEncoder().encodeToString(block.calculateHash()).equals(hash)) {
@@ -304,7 +303,7 @@ public class BlockchainServerRunnable implements Runnable {
 
             while (!Arrays.equals(block.getPreviousHash(), new byte[32])) {
                 Socket nextSocket = new Socket();
-                nextSocket.connect(new InetSocketAddress(remoteIP, remotePort), 500);
+                nextSocket.connect(new InetSocketAddress(remoteIP, remotePort), 2000);
 
                 InputStream is = nextSocket.getInputStream();
                 OutputStream os = nextSocket.getOutputStream();

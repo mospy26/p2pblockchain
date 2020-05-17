@@ -2,6 +2,7 @@ package blockchain;
 
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.Date;
@@ -67,8 +68,10 @@ public class PeriodicLatestBlockHashSender implements Runnable {
         Random rand = new Random();
         HashSet<ServerInfo> servers = new HashSet<>();
         Object[] allServers = serverStatus.keySet().toArray();
+
         if (serverStatus.size() < 5) return new HashSet<ServerInfo>(serverStatus.keySet());
-        while(servers.size() <= Math.min(serverStatus.size(), 5)) {
+
+        while(servers.size() < Math.min(serverStatus.size(), 5)) {
             servers.add((ServerInfo) allServers[rand.nextInt(allServers.length)]);
         }
 
