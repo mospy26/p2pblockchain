@@ -92,13 +92,11 @@ public class BlockchainServer {
             InputStream clientInputStream = socket.getInputStream();
             OutputStream clientOutputStream = socket.getOutputStream();
 
-            // ObjectInputStream inputReader = new ObjectInputStream(clientInputStream);
             PrintWriter outWriter = new PrintWriter(clientOutputStream, true);
 
             outWriter.println("cu");
             outWriter.flush();
 
-            // Block block = (Block) inputReader.readObject();
             Block block = getBlock(clientInputStream);
 
             if (block == null) {
