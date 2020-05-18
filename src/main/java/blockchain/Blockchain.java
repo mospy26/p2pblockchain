@@ -103,7 +103,7 @@ public class Blockchain {
                 + blockString;
     }
 
-    // add block to the end of blockchain from backwards
+    // add block to the end of blockchain from head onwards
     public synchronized void addBlock(Block block) {
         if (head == null) {
             head = block;
@@ -120,32 +120,5 @@ public class Blockchain {
         temp.setPreviousBlock(block);
         temp.setPreviousHash(block.calculateHash());
         length++;
-    }
-
-    public synchronized void addBlockToHead(Block block) {
-        block.setPreviousBlock(head);
-        block.setPreviousHash(head.calculateHash());
-        block.setCurrentHash(block.calculateHash());
-        head = block;
-        length++;
-    }
-
-    public synchronized Block fetchBlock(String hash) {
-        if (hash == null) return head;
-        Block block = head;
-
-        while (block != null) {
-            if (Base64.getEncoder().encodeToString(block.calculateHash()).equals(hash)) return block;
-            block = block.getPreviousBlock();
-        }
-        return null;
-    }
-
-    public synchronized Block removeHead() {
-        Block head = this.head;
-        Block prevBlock = head.getPreviousBlock();
-        this.head = prevBlock;
-        length--;
-        return head;
     }
 }

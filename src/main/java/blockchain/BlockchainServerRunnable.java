@@ -1,5 +1,6 @@
 package blockchain;
 
+
 import java.io.*;
 import java.net.Socket;
 import java.net.InetSocketAddress;
@@ -7,7 +8,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Date;
-import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class BlockchainServerRunnable implements Runnable {
@@ -111,15 +111,10 @@ public class BlockchainServerRunnable implements Runnable {
                                 .toString().replace("/", "");
 
                         if (blockchainSize > blockchain.getLength()) {
-                            synchronized(blockchain) {
-                                if (blockchain.getLength() == blockchainSize) break;
-                                catchup(remote, senderPort, tokens[3]);
-                            }
-                        } else if (blockchainSize == blockchain.getLength() && !isGreaterHash) {
-                            synchronized(blockchain) {
-                                if (blockchain.getLength() == blockchainSize) break;
-                                catchup(remote, senderPort, tokens[3]);
-                            }
+                            catchup(remote, senderPort);
+                        }
+                        else if (blockchainSize == blockchain.getLength() && !isGreaterHash) {
+                            catchup(remote, senderPort);
                         }
 
                         break;
@@ -134,10 +129,8 @@ public class BlockchainServerRunnable implements Runnable {
                             break;
 
                         Block block;
-                        if (tokens.length == 1)
-                            block = blockchain.fetchBlock(null);
-                        else
-                            block = blockchain.fetchBlock(tokens[1]);
+                        if (tokens.length == 1) block = fetchBlock(null);
+                        else block = fetchBlock(tokens[1]);
 
                         // Invalid hash or block
                         if (block == null) {
@@ -159,91 +152,13 @@ public class BlockchainServerRunnable implements Runnable {
         }
     }
 
-    /**
-     * 
-     * Catcup algorithm
-     *  1. Get all blocks from the peer that I dont have
-     *  2. prune my blockchain to remove those unnecessary blocks and replace them with their blocks
-     * 
-     * @param remoteAddr
-     * @param remotePort
-     * @param hash
-     */
-    private synchronized void catchup(String remoteAddr, int remotePort, String hash) {
-        try {
-            Block block = getBlockFromCatchup(remoteAddr, remotePort, hash);
-
-            Stack<Block> blocks = new Stack<>();
-            blocks.push(block);
-            hash = Base64.getEncoder().encodeToString(block.getPreviousHash());
-
-            // case where my blockchain is empty
-            if (blockchain.getHead() == null) {
-                blockchain.addBlock(block);
-                while (!Arrays.equals(Base64.getDecoder().decode(hash), new byte[32])) {
-                    block = getBlockFromCatchup(remoteAddr, remotePort, hash);
-                    blockchain.addBlock(block);
-                    hash = Base64.getEncoder().encodeToString(block.getPreviousHash());
-                }
-                return;
-            }
-
-            // // case when peer is clearly ahead of me and no conflicts
-            // if (Arrays.equals(blockchain.getHead().calculateHash(), blockchain.fetchBlock(hash).calculateHash())) {
-            //     byte[] headHash = blockchain.getHead().calculateHash();
-            //     while (!Arrays.equals(Base64.getDecoder().decode(hash), headHash)) {
-            //         block = getBlockFromCatchup(remoteAddr, remotePort, hash);
-            //         blockchain.addBlockToHead(block);
-            //         hash = Base64.getEncoder().encodeToString(block.getPreviousHash());
-            //     }
-            //     return; 
-            // }
-
-            // get all blocks that are unknown to blockchain
-            while (blockchain.fetchBlock(hash) == null) {
-                block = getBlockFromCatchup(remoteAddr, remotePort, hash);
-                blocks.push(block);
-                hash = Base64.getEncoder().encodeToString(block.getPreviousHash());
-            }
-
-            // System.out.println(block);
-            // This must be the intersection as the above while loop broke
-            block = blockchain.fetchBlock(hash);
-
-            // remove all blocks until intersection and move all transactions into the pool
-            ArrayList<Transaction> transactions = new ArrayList<>(blockchain.getPool());
-            shiftBlockTransactionsToPool(transactions, block);
-
-            // add blocks from peer from the forked block onwards
-            addBlocksFromPeer(blocks, transactions);
-
-            blockchain.setPool(transactions);
-        } catch (Exception e) {
-            return;
-        }
+    private void catchup(String remoteAddr, int remotePort) {
+        // Establish new connection
 
         // Do the catchup
 
-        // initialCatchup(blockchain, remoteAddr, remotePort);
+        initialCatchup(blockchain, remoteAddr, remotePort);
         return;
-    }
-
-    private void shiftBlockTransactionsToPool(ArrayList<Transaction> transactions, Block intersectionBlock) {
-        Block removedBlock = blockchain.getHead();
-        byte[] intersectionHash = intersectionBlock.calculateHash();
-
-        while (!Arrays.equals(removedBlock.calculateHash(), intersectionHash)) {
-            removedBlock = blockchain.removeHead();
-            transactions.addAll(removedBlock.getTransactions());
-        }
-    }
-
-    private void addBlocksFromPeer(Stack<Block> blocks, ArrayList<Transaction> transactions) {
-        while (!blocks.empty()) {
-            Block block = blocks.pop();
-            blockchain.addBlockToHead(block);
-            transactions.removeAll(block.getTransactions());
-        }
     }
 
     private void sendBlock(Block block, ObjectOutputStream sender) {
@@ -253,6 +168,18 @@ public class BlockchainServerRunnable implements Runnable {
         } catch (IOException e) {
             return;
         }
+    }
+
+    private Block fetchBlock(String hash) {
+        Block block = blockchain.getHead();
+
+        while (block != null) {
+            if (Base64.getEncoder().encodeToString(block.calculateHash()).equals(hash)) {
+                return block;
+            }
+            block = block.getPreviousBlock();
+        }
+        return null;
     }
 
     private void heartBeatReceivedHandler(String remoteIP, String localIP, int remotePort, int localPort, String seq) {
@@ -285,8 +212,7 @@ public class BlockchainServerRunnable implements Runnable {
         }
     }
 
-    private void siCommandHandler(String remoteIP, String localIP, String originatorIP, int remotePort, int localPort,
-            int originatorPort, String line) {
+    private void siCommandHandler(String remoteIP, String localIP, String originatorIP, int remotePort, int localPort, int originatorPort, String line) {
 
         ServerInfo remote = new ServerInfo(remoteIP, remotePort);
         ServerInfo local = new ServerInfo(localIP, localPort);
@@ -301,8 +227,7 @@ public class BlockchainServerRunnable implements Runnable {
                 if (s.equals(remote) || s.equals(local) || s.equals(originator)) {
                     continue;
                 }
-                Thread thread = new Thread(
-                        new HeartBeatClientRunnable(s, "si|" + localPort + "|" + remoteIP + "|" + remotePort));
+                Thread thread = new Thread(new HeartBeatClientRunnable(s, "si|" + localPort + "|" + remoteIP + "|" + remotePort));
                 threadArrayList.add(thread);
                 thread.start();
             }
@@ -318,7 +243,9 @@ public class BlockchainServerRunnable implements Runnable {
     }
 
     private boolean hbCommandValid(String line) {
-        return line.matches("^hb\\|" + PORT_REGEX + "\\|[0-9]+$") && Integer.parseInt(line.split("\\|")[1]) >= 1024;
+        return line.matches(
+                "^hb\\|" + PORT_REGEX + "\\|[0-9]+$")
+                && Integer.parseInt(line.split("\\|")[1]) >= 1024;
     }
 
     private boolean siCommandValid(String line, String[] tokens) {
@@ -336,15 +263,6 @@ public class BlockchainServerRunnable implements Runnable {
 
     // returns true if my hash is lesser than the other one
     private boolean compareHash(byte[] hash1, byte[] hash2) {
-        // if (hash1.length != hash2.length)
-        //     return false;
-        // if (Arrays.equals(hash1, hash2))
-        //     return false;
-
-        // for (int i = 0; i < hash1.length; i++) {
-        //     if (Byte.compare(hash1[i], hash2[i]) > 0) return false;
-        // }
-        // return true;
         if (hash1.length != hash2.length) return false;
         for (int i = 0; i < hash1.length; i++) {
             if (hash1[i] < hash2[i]) return true;
@@ -352,33 +270,6 @@ public class BlockchainServerRunnable implements Runnable {
             else return false;
         }
         return false;
-    }
-
-    private Block getBlockFromCatchup(String remoteAddr, int remotePort, String hash) {
-        Socket socket = new Socket();
-        try {
-            socket.connect(new InetSocketAddress(remoteAddr, remotePort), 3000);
-
-            PrintWriter printWriter = new PrintWriter(socket.getOutputStream());
-            printWriter.println("cu|" + hash);
-            printWriter.flush();
-
-            ObjectInputStream input = new ObjectInputStream(socket.getInputStream());
-
-            Block block = (Block) input.readObject();
-
-            socket.close();
-            return block;            
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        } catch (ClassNotFoundException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-            return null;
-        }
-
-
     }
 
     public void initialCatchup(Blockchain blockchain, String remoteIP, int remotePort) {
