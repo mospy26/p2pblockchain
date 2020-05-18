@@ -98,7 +98,6 @@ public class BlockchainServerRunnable implements Runnable {
                         break;
 
                     case "lb":
-                    System.out.println(inputLine);
                         if (!lbCommandValid(inputLine, tokens))
                             break;
 
@@ -112,9 +111,6 @@ public class BlockchainServerRunnable implements Runnable {
                         String remote = (((InetSocketAddress) clientSocket.getRemoteSocketAddress()).getAddress())
                                 .toString().replace("/", "");
 
-                        System.out.println(blockchain.getLength());
-                        System.out.println(blockchainSize);
-                        System.out.println(!isSmallerHash);
                         if (blockchainSize > blockchain.getLength()) {
                             synchronized(blockchain) {
                                 catchup(remote, senderPort, tokens[3], false);

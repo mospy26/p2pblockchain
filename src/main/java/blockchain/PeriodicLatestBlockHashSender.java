@@ -33,7 +33,7 @@ public class PeriodicLatestBlockHashSender implements Runnable {
             ArrayList<Thread> threadArrayList = new ArrayList<>();
             if (blockchain.getLength() == 0) {
                 try {
-                    Thread.sleep(10000);
+                    Thread.sleep(2000);
                 } catch (InterruptedException e) {
                 }
                 continue;
@@ -57,7 +57,7 @@ public class PeriodicLatestBlockHashSender implements Runnable {
 
             // sleep for two seconds
             try {
-                Thread.sleep(10000);
+                Thread.sleep(2000);
             } catch (InterruptedException e) {
                 return;
             }
