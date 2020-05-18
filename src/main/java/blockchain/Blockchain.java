@@ -124,7 +124,7 @@ public class Blockchain {
 
     public synchronized void addBlockToHead(Block block) {
         block.setPreviousBlock(head);
-        block.setPreviousHash(head.calculateHash());
+        block.setPreviousHash(head == null ? new byte[32] : head.calculateHash());
         block.setCurrentHash(block.calculateHash());
         head = block;
         length++;
@@ -139,6 +139,11 @@ public class Blockchain {
             block = block.getPreviousBlock();
         }
         return null;
+    }
+
+    public synchronized void clear() {
+        head = null;
+        length = 0;
     }
 
     public synchronized Block removeHead() {
